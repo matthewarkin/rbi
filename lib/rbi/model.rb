@@ -928,8 +928,10 @@ module RBI
       @visibility = visibility
     end
 
-    sig { params(other: Visibility).returns(T::Boolean) }
+    sig { params(other: T.nilable(Object)).returns(T::Boolean) }
     def ==(other)
+      return false unless other.is_a?(Visibility)
+
       visibility == other.visibility
     end
 

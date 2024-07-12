@@ -208,7 +208,9 @@ module RBI
       print_loc(node)
       visit_all(node.comments)
 
-      printl("#{node.name} = #{node.value}")
+      type = node.value.gsub(/T\.let\([^,]+, ?(.*)\)/, '\1')
+      type = type_to_rbs(type)
+      printl("#{node.name}: #{type}")
     end
 
     sig { override.params(node: AttrAccessor).void }
@@ -270,36 +272,6 @@ module RBI
       print("def ")
       print("self.") if node.is_singleton
       print(node.name)
-      unless node.params.empty?
-        print("(")
-        if node.params.all? { |p| p.comments.empty? }
-          node.params.each_with_index do |param, index|
-            print(", ") if index > 0
-            visit(param)
-          end
-        else
-          printn
-          indent
-          node.params.each_with_index do |param, pindex|
-            printt
-            visit(param)
-            print(",") if pindex < node.params.size - 1
-
-            comment_lines = param.comments.flat_map { |comment| comment.text.lines.map(&:rstrip) }
-            comment_lines.each_with_index do |comment, cindex|
-              if cindex > 0
-                print_param_comment_leading_space(param, last: pindex == node.params.size - 1)
-              else
-                print(" ")
-              end
-              print("# #{comment}")
-            end
-            printn
-          end
-          dedent
-        end
-        print(")")
-      end
       sigs = node.sigs
       if sigs.any?
         print(": ")
@@ -314,6 +286,8 @@ module RBI
             visit(sig)
           end
         end
+      else
+        print(": (*untyped) -> untyped")
       end
       printn
     end
@@ -365,6 +339,8 @@ module RBI
 
     sig { params(node: Mixin).void }
     def visit_mixin(node)
+      return if node.is_a?(MixesInClassMethods) # no-op, `mixes_in_class_methods` is not supported in RBS
+
       print_blank_line_before(node)
       print_loc(node)
       visit_all(node.comments)
@@ -374,8 +350,6 @@ module RBI
         printt("include")
       when Extend
         printt("extend")
-      when MixesInClassMethods
-        printt("mixes_in_class_methods")
       end
       printn(" #{node.names.join(", ")}")
     end
@@ -387,7 +361,7 @@ module RBI
 
     sig { override.params(node: Protected).void }
     def visit_protected(node)
-      visit_visibility(node)
+      # no-op, `protected` is not supported in RBS
     end
 
     sig { override.params(node: Private).void }
@@ -456,54 +430,27 @@ module RBI
 
     sig { override.params(node: TStruct).void }
     def visit_tstruct(node)
-      visit_scope(node)
+      # no-op, `T::Struct` is not supported in RBS
     end
 
     sig { override.params(node: TStructConst).void }
     def visit_tstruct_const(node)
-      visit_t_struct_field(node)
+      # no-op, `T::Struct` is not supported in RBS
     end
 
     sig { override.params(node: TStructProp).void }
     def visit_tstruct_prop(node)
-      visit_t_struct_field(node)
-    end
-
-    sig { params(node: TStructField).void }
-    def visit_t_struct_field(node)
-      print_blank_line_before(node)
-      print_loc(node)
-      visit_all(node.comments)
-
-      case node
-      when TStructProp
-        printt("prop")
-      when TStructConst
-        printt("const")
-      end
-      print(" :#{node.name}, #{node.type}")
-      default = node.default
-      print(", default: #{default}") if default
-      printn
+      # no-op, `T::Struct` is not supported in RBS
     end
 
     sig { override.params(node: TEnum).void }
     def visit_tenum(node)
-      visit_scope(node)
+      # no-op, `T::Enum` is not supported in RBS
     end
 
     sig { override.params(node: TEnumBlock).void }
     def visit_tenum_block(node)
-      print_loc(node)
-      visit_all(node.comments)
-
-      printl("enums do")
-      indent
-      node.names.each do |name|
-        printl("#{name} = new")
-      end
-      dedent
-      printl("end")
+      # no-op, `T::Enum` is not supported in RBS
     end
 
     sig { override.params(node: TypeMember).void }
@@ -517,11 +464,7 @@ module RBI
 
     sig { override.params(node: Helper).void }
     def visit_helper(node)
-      print_blank_line_before(node)
-      print_loc(node)
-      visit_all(node.comments)
-
-      printl("#{node.name}!")
+      # no-op, helpers such as `abstract!` or `interface!` are not supported in RBS
     end
 
     sig { override.params(node: MixesInClassMethods).void }
@@ -550,11 +493,7 @@ module RBI
 
     sig { override.params(node: RequiresAncestor).void }
     def visit_requires_ancestor(node)
-      print_blank_line_before(node)
-      print_loc(node)
-      visit_all(node.comments)
-
-      printl("requires_ancestor { #{node.name} }")
+      # no-op, `requires_ancestor` is not supported in RBS
     end
 
     sig { override.params(node: ConflictTree).void }
@@ -702,7 +641,18 @@ module RBI
 
     sig { params(type: String).returns(String) }
     def type_to_rbs(type)
-      type.gsub(/T\.type_parameter\(:([A-Z][A-Za-z0-9]*)\)/, '\1')
+      # TODO: we need to parse types properly
+      type = type.gsub(/T\.proc\.params\((.*)\)\.void/, "^(\\1) -> void")
+      type = type.gsub(/T\.proc\.params\((.*)\)\.returns\((.*)\)/, "^(\\1) -> \\2")
+      type = type.gsub(/T\.any(\(.*\))/, "\\1").split(/, ?/).join(" | ")
+      type = type.gsub(/T\.all(\(.*\))/, "\\1").split(/, ?/).join(" & ")
+      type = type.gsub(/T\.nilable\((.*)\)/, "\\1?")
+      type = type.gsub(/T\.class_of\((.*)\)/, "singleton(\\1)")
+      type = type.gsub(/T\.type_parameter\(:([A-Z][A-Za-z0-9]*)\)/, '\1')
+      type = type.gsub(/T::Class\[(.*)\]/, "singleton(\\1)")
+      type = type.gsub("T.attached_class", "instance")
+      type = type.gsub("T.untyped", "untyped")
+      type
     end
   end
 

@@ -242,10 +242,10 @@ module RBI
         @last_node = node
         current_scope << Method.new(
           node.name.to_s,
+          comments: current_sigs_comments + node_comments(node),
           params: parse_params(node.parameters),
           sigs: current_sigs,
           loc: node_loc(node),
-          comments: current_sigs_comments + node_comments(node),
           is_singleton: !!node.receiver,
         )
         @last_node = nil
