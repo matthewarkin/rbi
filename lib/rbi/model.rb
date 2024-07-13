@@ -574,7 +574,7 @@ module RBI
     sig do
       params(
         params: T::Array[SigParam],
-        return_type: T.nilable(String),
+        return_type: T.any(String, Type),
         is_abstract: T::Boolean,
         is_override: T::Boolean,
         is_overridable: T::Boolean,
@@ -586,7 +586,7 @@ module RBI
     end
     def add_sig(
       params: [],
-      return_type: nil,
+      return_type: "void",
       is_abstract: false,
       is_override: false,
       is_overridable: false,

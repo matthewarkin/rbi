@@ -34,6 +34,11 @@ module RBI
     class Boolean < Type
       extend T::Sig
 
+      sig { override.params(other: Type).returns(T::Boolean) }
+      def ==(other)
+        other.is_a?(Boolean)
+      end
+
       sig { override.returns(String) }
       def to_rbi
         "T::Boolean"
@@ -58,11 +63,22 @@ module RBI
     class Generic < Type
       extend T::Sig
 
+      sig { returns(String) }
+      attr_reader :name
+
+      sig { returns(T::Array[Type]) }
+      attr_reader :params
+
       sig { params(name: String, params: Type).void }
       def initialize(name, *params)
         super()
         @name = name
         @params = T.let(params, T::Array[Type])
+      end
+
+      sig { override.params(other: Type).returns(T::Boolean) }
+      def ==(other)
+        other.is_a?(Generic) && @name == other.name && @params == other.params
       end
 
       sig { override.returns(String) }
@@ -74,6 +90,11 @@ module RBI
     class Anything < Type
       extend T::Sig
 
+      sig { override.params(other: Type).returns(T::Boolean) }
+      def ==(other)
+        other.is_a?(Anything)
+      end
+
       sig { override.returns(String) }
       def to_rbi
         "T.anything"
@@ -82,6 +103,11 @@ module RBI
 
     class Void < Type
       extend T::Sig
+
+      sig { override.params(other: Type).returns(T::Boolean) }
+      def ==(other)
+        other.is_a?(Void)
+      end
 
       sig { override.returns(String) }
       def to_rbi
@@ -92,6 +118,11 @@ module RBI
     class Untyped < Type
       extend T::Sig
 
+      sig { override.params(other: Type).returns(T::Boolean) }
+      def ==(other)
+        other.is_a?(Untyped)
+      end
+
       sig { override.returns(String) }
       def to_rbi
         "T.untyped"
@@ -101,6 +132,11 @@ module RBI
     class SelfType < Type
       extend T::Sig
 
+      sig { override.params(other: Type).returns(T::Boolean) }
+      def ==(other)
+        other.is_a?(SelfType)
+      end
+
       sig { override.returns(String) }
       def to_rbi
         "T.self_type"
@@ -109,6 +145,11 @@ module RBI
 
     class AttachedClass < Type
       extend T::Sig
+
+      sig { override.params(other: Type).returns(T::Boolean) }
+      def ==(other)
+        other.is_a?(AttachedClass)
+      end
 
       sig { override.returns(String) }
       def to_rbi
@@ -126,6 +167,11 @@ module RBI
       def initialize(type)
         super()
         @type = type
+      end
+
+      sig { override.params(other: Type).returns(T::Boolean) }
+      def ==(other)
+        other.is_a?(Nilable) && @type == other.type
       end
 
       sig { override.returns(String) }
@@ -153,10 +199,18 @@ module RBI
     class ClassOf < Type
       extend T::Sig
 
+      sig { returns(Type) }
+      attr_reader :type
+
       sig { params(type: Simple).void }
       def initialize(type)
         super()
         @type = type
+      end
+
+      sig { override.params(other: Type).returns(T::Boolean) }
+      def ==(other)
+        other.is_a?(ClassOf) && @type == other.type
       end
 
       sig { override.returns(String) }
@@ -168,6 +222,11 @@ module RBI
     class All < Composite
       extend T::Sig
 
+      sig { override.params(other: Type).returns(T::Boolean) }
+      def ==(other)
+        other.is_a?(All) && @types == other.types
+      end
+
       sig { override.returns(String) }
       def to_rbi
         "T.all(#{@types.map(&:to_rbi).join(", ")})"
@@ -176,6 +235,11 @@ module RBI
 
     class Any < Composite
       extend T::Sig
+
+      sig { override.params(other: Type).returns(T::Boolean) }
+      def ==(other)
+        other.is_a?(Any) && @types == other.types
+      end
 
       sig { override.returns(String) }
       def to_rbi
@@ -191,10 +255,18 @@ module RBI
     class Tuple < Type
       extend T::Sig
 
+      sig { returns(T::Array[Type]) }
+      attr_reader :types
+
       sig { params(types: T::Array[Type]).void }
       def initialize(types)
         super()
         @types = types
+      end
+
+      sig { override.params(other: Type).returns(T::Boolean) }
+      def ==(other)
+        other.is_a?(Tuple) && @types == other.types
       end
 
       sig { override.returns(String) }
@@ -206,10 +278,18 @@ module RBI
     class Shape < Type
       extend T::Sig
 
+      sig { returns(T::Hash[Symbol, Type]) }
+      attr_reader :types
+
       sig { params(types: T::Hash[Symbol, Type]).void }
       def initialize(types)
         super()
         @types = types
+      end
+
+      sig { override.params(other: Type).returns(T::Boolean) }
+      def ==(other)
+        other.is_a?(Shape) && @types == other.types
       end
 
       sig { override.returns(String) }
@@ -219,35 +299,56 @@ module RBI
     end
 
     class Proc < Type
+      extend T::Sig
+
+      sig { returns(T::Hash[Symbol, Type]) }
+      attr_reader :proc_params
+
+      sig { returns(Type) }
+      attr_reader :proc_returns
+
+      sig { returns(T.nilable(Type)) }
+      attr_reader :proc_bind
+
       sig { void }
       def initialize
-        super()
-        @params = T.let({}, T::Hash[Symbol, Type])
-        @returns = T.let(Type.void, Type)
-        @bind = T.let(nil, T.nilable(Type))
+        super
+        @proc_params = T.let({}, T::Hash[Symbol, Type])
+        @proc_returns = T.let(Type.void, Type)
+        @proc_bind = T.let(nil, T.nilable(Type))
+      end
+
+      sig { override.params(other: Type).returns(T::Boolean) }
+      def ==(other)
+        return false unless other.is_a?(Proc)
+        return false unless @proc_params == other.proc_params
+        return false unless @proc_returns == other.proc_returns
+
+        other_bind = other.proc_bind
+        !!((@proc_bind.nil? && other_bind.nil?) || (@proc_bind && other_bind && @proc_bind == other_bind))
       end
 
       sig { params(params: Type).returns(T.self_type) }
       def params(**params)
-        @params = params
+        @proc_params = params
         self
       end
 
       sig { params(type: T.untyped).returns(T.self_type) }
       def returns(type)
-        @returns = type
+        @proc_returns = type
         self
       end
 
       sig { returns(T.self_type) }
       def void
-        @returns = RBI::Type.void
+        @proc_returns = RBI::Type.void
         self
       end
 
       sig { params(type: T.untyped).returns(T.self_type) }
       def bind(type)
-        @bind = type
+        @proc_bind = type
         self
       end
 
@@ -255,21 +356,21 @@ module RBI
       def to_rbi
         rbi = +"T.proc"
 
-        if @bind
-          rbi << ".bind(#{@bind})"
+        if @proc_bind
+          rbi << ".bind(#{@proc_bind})"
         end
 
-        unless @params.empty?
+        unless @proc_params.empty?
           rbi << ".params("
-          rbi << @params.map { |name, type| "#{name}: #{type.to_rbi}" }.join(", ")
+          rbi << @proc_params.map { |name, type| "#{name}: #{type.to_rbi}" }.join(", ")
           rbi << ")"
         end
 
-        rbi << case @returns
+        rbi << case @proc_returns
         when Void
           ".void"
         else
-          ".returns(#{@returns})"
+          ".returns(#{@proc_returns})"
         end
 
         rbi

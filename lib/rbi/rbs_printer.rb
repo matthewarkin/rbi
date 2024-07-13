@@ -251,7 +251,7 @@ module RBI
         print(" #{name}")
         first_sig, *_rest = node.sigs # discard remaining signatures
         if first_sig
-          type = type_to_rbs(first_sig.return_type || "void")
+          type = type_to_rbs(first_sig.return_type.to_s)
           print(": #{type}")
         end
         printn
@@ -424,7 +424,7 @@ module RBI
 
     sig { override.params(node: SigParam).void }
     def visit_sig_param(node)
-      type = type_to_rbs(node.type)
+      type = type_to_rbs(node.type.to_s)
       print("#{node.name}: #{type}")
     end
 
@@ -557,7 +557,7 @@ module RBI
     def print_sig_param_comment_leading_space(node, last:)
       printn
       printt
-      print(" " * (node.name.size + node.type.size + 3))
+      print(" " * (node.name.size + node.type.to_s.size + 3))
       print(" ") unless last
     end
 
@@ -597,7 +597,7 @@ module RBI
         end
         print(") ")
       end
-      type = type_to_rbs(node.return_type || "void")
+      type = type_to_rbs(node.return_type.to_s)
       print("-> #{type}")
 
       loc = node.loc
@@ -635,7 +635,7 @@ module RBI
       end
       printt if params.empty?
 
-      return_type = type_to_rbs(node.return_type || "void")
+      return_type = type_to_rbs(node.return_type.to_s)
       print("-> #{return_type}")
     end
 
