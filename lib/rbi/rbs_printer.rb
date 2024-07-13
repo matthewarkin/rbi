@@ -455,11 +455,7 @@ module RBI
 
     sig { override.params(node: TypeMember).void }
     def visit_type_member(node)
-      print_blank_line_before(node)
-      print_loc(node)
-      visit_all(node.comments)
-
-      printl("#{node.name} = #{node.value}")
+      # TODO
     end
 
     sig { override.params(node: Helper).void }
@@ -586,7 +582,7 @@ module RBI
     sig { params(node: Sig).void }
     def print_sig_as_line(node)
       unless node.type_params.empty?
-        print("[#{node.type_params.join(", ")}] ")
+        print("[#{node.type_params.map { |t| "TYPE_#{t}" }.join(", ")}] ")
       end
 
       unless node.params.empty?
@@ -607,7 +603,7 @@ module RBI
     sig { params(node: Sig).void }
     def print_sig_as_block(node)
       unless node.type_params.empty?
-        print("[#{node.type_params.join(", ")}] ")
+        print("[#{node.type_params.map { |t| "TYPE_#{t}" }.join(", ")}] ")
       end
 
       params = node.params
@@ -641,18 +637,212 @@ module RBI
 
     sig { params(type: String).returns(String) }
     def type_to_rbs(type)
-      # TODO: we need to parse types properly
-      type = type.gsub(/T\.proc\.params\((.*)\)\.void/, "^(\\1) -> void")
-      type = type.gsub(/T\.proc\.params\((.*)\)\.returns\((.*)\)/, "^(\\1) -> \\2")
-      type = type.gsub(/T\.any(\(.*\))/, "\\1").split(/, ?/).join(" | ")
-      type = type.gsub(/T\.all(\(.*\))/, "\\1").split(/, ?/).join(" & ")
-      type = type.gsub(/T\.nilable\((.*)\)/, "\\1?")
-      type = type.gsub(/T\.class_of\((.*)\)/, "singleton(\\1)")
-      type = type.gsub(/T\.type_parameter\(:([A-Z][A-Za-z0-9]*)\)/, '\1')
-      type = type.gsub(/T::Class\[(.*)\]/, "singleton(\\1)")
-      type = type.gsub("T.attached_class", "instance")
-      type = type.gsub("T.untyped", "untyped")
-      type
+      rbi_type = Type::Parser.parse(type)
+      rbi_type.rbs_string
+    rescue Type::Parser::Error => e
+      # raise PrinterError, "Failed to parse type `#{type}` (#{e.message})"
+      puts "Failed to parse type `#{type}` (#{e.message})"
+      "untyped"
+    end
+  end
+
+  class TypePrinter
+    extend T::Sig
+
+    sig { returns(String) }
+    attr_reader :string
+
+    sig { void }
+    def initialize
+      @string = T.let(String.new, String)
+    end
+
+    sig { params(node: Type).void }
+    def visit(node)
+      case node
+      when Type::Simple
+        visit_simple(node)
+      when Type::Boolean
+        visit_boolean(node)
+      when Type::Verbatim
+        visit_verbatim(node)
+      when Type::Generic
+        visit_generic(node)
+      when Type::Anything
+        visit_anything(node)
+      when Type::Void
+        visit_void(node)
+      when Type::NoReturn
+        visit_no_return(node)
+      when Type::Untyped
+        visit_untyped(node)
+      when Type::SelfType
+        visit_self_type(node)
+      when Type::AttachedClass
+        visit_attached_class(node)
+      when Type::Nilable
+        visit_nilable(node)
+      when Type::ClassOf
+        visit_class_of(node)
+      when Type::All
+        visit_all(node)
+      when Type::Any
+        visit_any(node)
+      when Type::Tuple
+        visit_tuple(node)
+      when Type::Shape
+        visit_shape(node)
+      when Type::Proc
+        visit_proc(node)
+      when Type::TypeParameter
+        visit_type_parameter(node)
+      when Type::Class
+        visit_class(node)
+      else
+        raise PrinterError, "Unhandled node: #{node.class}"
+      end
+    end
+
+    sig { params(type: Type::Simple).void }
+    def visit_simple(type)
+      @string << type.name
+    end
+
+    sig { params(type: Type::Boolean).void }
+    def visit_boolean(type)
+      @string << "bool"
+    end
+
+    sig { params(type: Type::Verbatim).void }
+    def visit_verbatim(type)
+      @string << type.rbi_string
+    end
+
+    sig { params(type: Type::Generic).void }
+    def visit_generic(type)
+      @string << type.name
+      @string << "["
+      type.params.each_with_index do |arg, index|
+        visit(arg)
+        @string << ", " if index < type.params.size - 1
+      end
+      @string << "]"
+    end
+
+    sig { params(type: Type::Anything).void }
+    def visit_anything(type)
+      @string << "untyped" # TODO: bot
+    end
+
+    sig { params(type: Type::Void).void }
+    def visit_void(type)
+      @string << "void"
+    end
+
+    sig { params(type: Type::NoReturn).void }
+    def visit_no_return(type)
+      @string << "void"
+    end
+
+    sig { params(type: Type::Untyped).void }
+    def visit_untyped(type)
+      @string << "untyped"
+    end
+
+    sig { params(type: Type::SelfType).void }
+    def visit_self_type(type)
+      @string << "self"
+    end
+
+    sig { params(type: Type::AttachedClass).void }
+    def visit_attached_class(type)
+      @string << "attached_class"
+    end
+
+    sig { params(type: Type::Nilable).void }
+    def visit_nilable(type)
+      visit(type.type)
+      @string << "?"
+    end
+
+    sig { params(type: Type::ClassOf).void }
+    def visit_class_of(type)
+      # @string << "singleton("
+      # visit(type.type)
+      # @string << ")"
+      # TODO
+      @string << "untyped"
+    end
+
+    sig { params(type: Type::All).void }
+    def visit_all(type)
+      @string << "("
+      type.types.each_with_index do |arg, index|
+        visit(arg)
+        @string << " & " if index < type.types.size - 1
+      end
+      @string << ")"
+    end
+
+    sig { params(type: Type::Any).void }
+    def visit_any(type)
+      @string << "("
+      type.types.each_with_index do |arg, index|
+        visit(arg)
+        @string << " | " if index < type.types.size - 1
+      end
+      @string << ")"
+    end
+
+    sig { params(type: Type::Tuple).void }
+    def visit_tuple(type)
+      @string << "["
+      type.types.each_with_index do |arg, index|
+        visit(arg)
+        @string << ", " if index < type.types.size - 1
+      end
+      @string << "]"
+    end
+
+    sig { params(type: Type::Shape).void }
+    def visit_shape(type)
+      @string << "{"
+      type.types.each_with_index do |(key, value), index|
+        @string << "#{key}: "
+        visit(value)
+        @string << ", " if index < type.types.size - 1
+      end
+      @string << "}"
+    end
+
+    sig { params(type: Type::Proc).void }
+    def visit_proc(type)
+      @string << "^"
+      if type.proc_params.any?
+        @string << "("
+        type.proc_params.each_with_index do |(key, value), index|
+          @string << "#{key}: "
+          visit(value)
+          @string << ", " if index < type.proc_params.size - 1
+        end
+        @string << ") "
+      end
+      @string << "-> "
+      visit(type.proc_returns)
+    end
+
+    sig { params(type: Type::TypeParameter).void }
+    def visit_type_parameter(type)
+      @string << "TYPE_#{type.name}"
+    end
+
+    sig { params(type: Type::Class).void }
+    def visit_class(type)
+      # @string << "singleton("
+      # visit(type.type)
+      # @string << ")"
+      # TODO
+      @string << "untyped"
     end
   end
 
@@ -701,6 +891,17 @@ module RBI
       out = StringIO.new
       rbs_print(out: out, indent: indent, print_locs: print_locs, max_line_length: max_line_length)
       out.string
+    end
+  end
+
+  class Type
+    extend T::Sig
+
+    sig { returns(String) }
+    def rbs_string
+      p = TypePrinter.new
+      p.visit(self)
+      p.string
     end
   end
 end

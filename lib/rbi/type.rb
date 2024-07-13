@@ -48,6 +48,9 @@ module RBI
     class Verbatim < Type
       extend T::Sig
 
+      sig { returns(String) }
+      attr_reader :rbi_string
+
       sig { params(rbi_string: String).void }
       def initialize(rbi_string)
         super()
@@ -87,6 +90,29 @@ module RBI
       end
     end
 
+    class Class < Type
+      extend T::Sig
+
+      sig { returns(Type) }
+      attr_reader :type
+
+      sig { params(type: Type).void }
+      def initialize(type)
+        super()
+        @type = type
+      end
+
+      sig { override.params(other: Type).returns(T::Boolean) }
+      def ==(other)
+        other.is_a?(Class) && @type == other.type
+      end
+
+      sig { override.returns(String) }
+      def to_rbi
+        "T::Class[#{@type}]"
+      end
+    end
+
     class Anything < Type
       extend T::Sig
 
@@ -112,6 +138,20 @@ module RBI
       sig { override.returns(String) }
       def to_rbi
         "void"
+      end
+    end
+
+    class NoReturn < Type
+      extend T::Sig
+
+      sig { override.params(other: Type).returns(T::Boolean) }
+      def ==(other)
+        other.is_a?(NoReturn)
+      end
+
+      sig { override.returns(String) }
+      def to_rbi
+        "T.noreturn"
       end
     end
 
@@ -377,6 +417,29 @@ module RBI
       end
     end
 
+    class TypeParameter < Type
+      extend T::Sig
+
+      sig { returns(Symbol) }
+      attr_reader :name
+
+      sig { params(name: Symbol).void }
+      def initialize(name)
+        super()
+        @name = name
+      end
+
+      sig { override.params(other: Type).returns(T::Boolean) }
+      def ==(other)
+        other.is_a?(TypeParameter) && @name == other.name
+      end
+
+      sig { override.returns(String) }
+      def to_rbi
+        "T.type_parameter(:#{@name})"
+      end
+    end
+
     class << self
       extend T::Sig
 
@@ -407,6 +470,11 @@ module RBI
       sig { returns(Void) }
       def void
         Void.new
+      end
+
+      sig { returns(NoReturn) }
+      def noreturn
+        NoReturn.new
       end
 
       sig { returns(Untyped) }
@@ -462,6 +530,16 @@ module RBI
       sig { returns(Proc) }
       def proc
         Proc.new
+      end
+
+      sig { params(name: Symbol).returns(TypeParameter) }
+      def type_parameter(name)
+        TypeParameter.new(name)
+      end
+
+      sig { params(type: Type).returns(Class) }
+      def t_class(type)
+        Class.new(type)
       end
 
       # Since we transform types such as `T.all(String, String)` into `String`, this method may return something else

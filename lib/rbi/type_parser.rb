@@ -80,8 +80,13 @@ module RBI
           when :[]
             case recv
             when Prism::ConstantReadNode, Prism::ConstantPathNode
-              args = check_arguments_at_least!(node, 1)
-              return T.unsafe(Type).generic(recv.slice, *args.map { |arg| parse_node(arg) })
+              if recv.slice == "T::Class"
+                args = check_arguments_count!(node, 1)
+                return Type.t_class(parse_node(T.must(args.first)))
+              else
+                args = check_arguments_at_least!(node, 1)
+                return T.unsafe(Type).generic(recv.slice, *args.map { |arg| parse_node(arg) })
+              end
             else
               raise
             end
@@ -115,6 +120,9 @@ module RBI
           when :untyped
             check_arguments_count!(node, 0)
             Type.untyped
+          when :noreturn
+            check_arguments_count!(node, 0)
+            Type.noreturn
           when :self_type
             check_arguments_count!(node, 0)
             Type.self_type
@@ -133,6 +141,9 @@ module RBI
           when :any
             args = check_arguments_at_least!(node, 2)
             T.unsafe(Type).any(*args.map { |arg| parse_node(arg) })
+          when :type_parameter
+            args = check_arguments_count!(node, 1)
+            Type.type_parameter(T.must(args.first).slice.delete_prefix(":").to_sym)
           else
             raise Error, "Unknown method #{node.name}"
           end

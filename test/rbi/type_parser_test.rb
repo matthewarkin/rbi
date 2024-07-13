@@ -250,5 +250,25 @@ module RBI
         type,
       )
     end
+
+    def test_parse_type_parameter
+      e = assert_raises(RBI::Type::Parser::Error) do
+        Type::Parser.parse("T.type_parameter")
+      end
+      assert_equal("Expected exactly 1 argument, got 0", e.message)
+
+      type = Type::Parser.parse("T.type_parameter(:U)")
+      assert_equal(Type.type_parameter(:U), type)
+    end
+
+    def test_parse_class
+      e = assert_raises(RBI::Type::Parser::Error) do
+        Type::Parser.parse("T::Class[]")
+      end
+      assert_equal("Expected exactly 1 argument, got 0", e.message)
+
+      type = Type::Parser.parse("T::Class[Foo]")
+      assert_equal(Type.t_class(Type.simple("Foo")), type)
+    end
   end
 end
