@@ -97,8 +97,6 @@ module RBI
       end
     end
 
-    private
-
     sig { override.params(node: Comment).void }
     def visit_comment(node)
       lines = node.text.lines
@@ -276,14 +274,14 @@ module RBI
       if sigs.any?
         print(": ")
         first, *rest = sigs
-        print_sig(node, T.must(first))
+        print_method_sig(node, T.must(first))
         if rest.any?
           spaces = node.name.size + 4
           rest.each do |sig|
             printn
             printt
             print("#{" " * spaces}| ")
-            print_sig(node, sig)
+            print_method_sig(node, sig)
           end
         end
       else
@@ -406,7 +404,7 @@ module RBI
     end
 
     sig { params(node: RBI::Method, sig: Sig).void }
-    def print_sig(node, sig)
+    def print_method_sig(node, sig)
       # max_line_length = self.max_line_length
       # if oneline?(node) && max_line_length.nil?
       print_sig_as_line(node, sig)
@@ -422,20 +420,34 @@ module RBI
       # end
     end
 
+    sig { params(node: RBI::Attr, sig: Sig).void }
+    def print_attr_sig(node, sig)
+      type = type_to_rbs(sig.return_type.to_s)
+      print(type)
+    end
+
     sig { params(node: Method, param: SigParam).void }
     def print_sig_param(node, param)
       type = type_to_rbs(param.type.to_s)
 
       orig_param = node.params.find { |p| p.name == param.name }
-      raise unless orig_param
+      raise "Param not found: #{param.name}" unless orig_param
 
       case orig_param
-      when ReqParam, OptParam, RestParam, BlockParam
-        print(type)
-      when KwParam, KwOptParam, KwRestParam
+      when ReqParam
+        print("#{type} #{param.name}")
+      when OptParam
+        print("?#{type} #{param.name}")
+      when RestParam
+        print("*#{type} #{param.name}")
+      when KwParam
         print("#{param.name}: #{type}")
+      when KwOptParam
+        print("?#{param.name}: #{type}")
+      when KwRestParam
+        print("**#{param.name}: #{type}")
       else
-        raise
+        raise "Unexpected param type: #{orig_param.class}"
       end
     end
 
@@ -596,6 +608,16 @@ module RBI
         print("[#{sig.type_params.map { |t| "TYPE_#{t}" }.join(", ")}] ")
       end
 
+      block_param = node.params.find { |param| param.is_a?(BlockParam) }
+      sig_block_param = sig.params.find { |param| param.name == block_param&.name }
+
+      sig_params = sig.params
+      if block_param
+        sig_params.reject! do |param|
+          param.name == block_param.name
+        end
+      end
+
       unless sig.params.empty?
         print("(")
         sig.params.each_with_index do |param, index|
@@ -603,6 +625,33 @@ module RBI
           print_sig_param(node, param)
         end
         print(") ")
+      end
+      if sig_block_param
+        block_type = sig_block_param.type
+        is_nilable = false
+        type = case block_type
+        when String
+          block_type = Type::Parser.parse(block_type)
+          if block_type.is_a?(Type::Nilable)
+            is_nilable = true
+            block_type.type.rbs_string
+          else
+            block_type.rbs_string
+          end
+        when Type
+          if block_type.is_a?(Type::Nilable)
+            is_nilable = true
+            block_type.type.rbs_string
+          else
+            block_type.rbs_string
+          end
+        end
+
+        if is_nilable
+          print("?{ #{type.delete_prefix("^")} } ")
+        else
+          print("{ #{type.delete_prefix("^")} } ")
+        end
       end
       type = type_to_rbs(sig.return_type.to_s)
       print("-> #{type}")

@@ -194,6 +194,24 @@ module RBI
       RBI
     end
 
+    def test_print_methods_with_signatures_simple
+      sig = Sig.new(return_type: "R")
+      sig << SigParam.new("a", "A")
+      sig << SigParam.new("b", "T.nilable(B)")
+      sig << SigParam.new("block", "T.proc.void")
+
+      method = Method.new("foo") do |node|
+        node.sigs << sig
+        node.params << ReqParam.new("a")
+        node.params << OptParam.new("b", "42")
+        node.params << BlockParam.new("block")
+      end
+
+      assert_equal(<<~RBI, method.rbs_string)
+        def foo: (A, B?) { -> void } -> R
+      RBI
+    end
+
     def test_print_methods_with_signatures
       sig1 = Sig.new
 

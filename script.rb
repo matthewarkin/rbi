@@ -37,6 +37,4 @@ rbi_files.each do |file|
   puts "  -> #{rbs_path}"
   rbs = RBS::Buffer.new(content: rbs, name: rbs_path)
   RBS::Parser.parse_signature(rbs)
-
-  # exit
 end

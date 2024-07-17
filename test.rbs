@@ -1,0 +1,6 @@
+class Foo
+  def foo: (String, ?Integer?) -> String?
+
+  class Bar
+  end
+end
