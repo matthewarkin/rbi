@@ -276,14 +276,14 @@ module RBI
       if sigs.any?
         print(": ")
         first, *rest = sigs
-        visit(first)
+        print_sig(node, T.must(first))
         if rest.any?
           spaces = node.name.size + 4
           rest.each do |sig|
             printn
             printt
             print("#{" " * spaces}| ")
-            visit(sig)
+            print_sig(node, sig)
           end
         end
       else
@@ -405,27 +405,38 @@ module RBI
       print("#{node.keyword}: #{node.value}")
     end
 
-    sig { override.params(node: Sig).void }
-    def visit_sig(node)
-      max_line_length = self.max_line_length
-      if oneline?(node) && max_line_length.nil?
-        print_sig_as_line(node)
-      elsif max_line_length
-        line = node.string(indent: current_indent)
-        if line.length <= max_line_length
-          print(line)
-        else
-          print_sig_as_block(node)
-        end
-      else
-        print_sig_as_block(node)
-      end
+    sig { params(node: RBI::Method, sig: Sig).void }
+    def print_sig(node, sig)
+      # max_line_length = self.max_line_length
+      # if oneline?(node) && max_line_length.nil?
+      print_sig_as_line(node, sig)
+      # elsif max_line_length
+      #   line = sig.string(indent: current_indent)
+      #   if line.length <= max_line_length
+      #     print(line)
+      #   else
+      #     print_sig_as_block(node, sig)
+      #   end
+      # else
+      #   print_sig_as_block(node, sig)
+      # end
     end
 
-    sig { override.params(node: SigParam).void }
-    def visit_sig_param(node)
-      type = type_to_rbs(node.type.to_s)
-      print("#{node.name}: #{type}")
+    sig { params(node: Method, param: SigParam).void }
+    def print_sig_param(node, param)
+      type = type_to_rbs(param.type.to_s)
+
+      orig_param = node.params.find { |p| p.name == param.name }
+      raise unless orig_param
+
+      case orig_param
+      when ReqParam, OptParam, RestParam, BlockParam
+        print(type)
+      when KwParam, KwOptParam, KwRestParam
+        print("#{param.name}: #{type}")
+      else
+        raise
+      end
     end
 
     sig { override.params(node: TStruct).void }
@@ -579,40 +590,40 @@ module RBI
       end
     end
 
-    sig { params(node: Sig).void }
-    def print_sig_as_line(node)
-      unless node.type_params.empty?
-        print("[#{node.type_params.map { |t| "TYPE_#{t}" }.join(", ")}] ")
+    sig { params(node: Method, sig: Sig).void }
+    def print_sig_as_line(node, sig)
+      unless sig.type_params.empty?
+        print("[#{sig.type_params.map { |t| "TYPE_#{t}" }.join(", ")}] ")
       end
 
-      unless node.params.empty?
+      unless sig.params.empty?
         print("(")
-        node.params.each_with_index do |param, index|
+        sig.params.each_with_index do |param, index|
           print(", ") if index > 0
-          visit(param)
+          print_sig_param(node, param)
         end
         print(") ")
       end
-      type = type_to_rbs(node.return_type.to_s)
+      type = type_to_rbs(sig.return_type.to_s)
       print("-> #{type}")
 
-      loc = node.loc
+      loc = sig.loc
       print(" # #{loc}") if loc && print_locs
     end
 
-    sig { params(node: Sig).void }
-    def print_sig_as_block(node)
-      unless node.type_params.empty?
-        print("[#{node.type_params.map { |t| "TYPE_#{t}" }.join(", ")}] ")
+    sig { params(node: Method, sig: Sig).void }
+    def print_sig_as_block(node, sig)
+      unless sig.type_params.empty?
+        print("[#{sig.type_params.map { |t| "TYPE_#{t}" }.join(", ")}] ")
       end
 
-      params = node.params
+      params = sig.params
       if params.any?
         printn("(")
         indent
         params.each_with_index do |param, pindex|
           printt
-          visit(param)
+          print_sig_param(node, param)
           print(",") if pindex < params.size - 1
 
           comment_lines = param.comments.flat_map { |comment| comment.text.lines.map(&:rstrip) }
@@ -631,7 +642,7 @@ module RBI
       end
       printt if params.empty?
 
-      return_type = type_to_rbs(node.return_type.to_s)
+      return_type = type_to_rbs(sig.return_type.to_s)
       print("-> #{return_type}")
     end
 
