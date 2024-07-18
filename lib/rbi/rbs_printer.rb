@@ -261,6 +261,10 @@ module RBI
       print_blank_line_before(node)
       visit_all(node.comments)
 
+      if node.sigs.any?(&:is_abstract)
+        printl("# @abstract")
+      end
+
       print_loc(node)
       printt
       unless in_visibility_group || node.visibility.public?
@@ -445,7 +449,7 @@ module RBI
       when KwOptParam
         print("?#{param.name}: #{type}")
       when KwRestParam
-        print("**#{param.name}: #{type}")
+        print("**#{type} #{param.name}")
       else
         raise "Unexpected param type: #{orig_param.class}"
       end

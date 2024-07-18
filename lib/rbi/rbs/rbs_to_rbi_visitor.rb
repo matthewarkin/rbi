@@ -32,16 +32,20 @@ module RBI
 
       sig { params(member: ::RBS::AST::Members::MethodDefinition).void }
       def visit_member_method_definition(member)
+        comments = rbi_comments(member.comment)
         method_type = member.overloads.first.method_type
         visibility = type_converter.visibility(member.visibility || @current_visibility)
+
+        abstract = comments.any? { |comment| comment.text.chomp == "@abstract" }
+        comments.reject! { |comment| comment.text.chomp == "@abstract" } if abstract
 
         current_scope << RBI::Method.new(
           member.name.to_s,
           is_singleton: member.singleton?,
           visibility: visibility,
-          comments: rbi_comments(member.comment),
+          comments: comments,
         ) do |method|
-          attach_signature_and_params(method, method_type)
+          attach_signature_and_params(method, method_type, abstract: abstract)
         end
       end
 
@@ -215,15 +219,16 @@ module RBI
         params(
           method: RBI::Method,
           method_type: ::RBS::MethodType,
+          abstract: T::Boolean,
         ).void
       end
-      def attach_signature_and_params(method, method_type)
+      def attach_signature_and_params(method, method_type, abstract:)
         tc = type_converter.with_type_params(method_type.type_params)
 
         parameters = tc.convert_parameters(method_type.type, method_type.block)
         return_type = tc.to_string(method_type.type.return_type)
 
-        method.sigs << sig = RBI::Sig.new do |sig|
+        method.sigs << sig = RBI::Sig.new(is_abstract: abstract) do |sig|
           tc.type_params.each do |type_param|
             sig.type_params << type_param.to_s
           end
