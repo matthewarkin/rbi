@@ -216,7 +216,7 @@ module RBI
 
     def test_parse_t_struct
       rbi = <<~RBI
-        class Foo < ::T::Struct
+        class Foo < T::Struct
           const :a, A
           const :b, B, default: B.new
           prop :c, C
@@ -231,7 +231,7 @@ module RBI
       assert_equal(TStruct, tree.nodes.first.class)
 
       assert_equal(<<~RBI, tree.string)
-        class Foo < ::T::Struct
+        class Foo < T::Struct
           const :a, A
           const :b, B, default: B.new
           prop :c, C
@@ -545,7 +545,7 @@ module RBI
 
     def test_parse_t_struct_locations
       rbi = <<~RBI
-        class Foo < ::T::Struct
+        class Foo < T::Struct
           const :a, A
           const :b, B, default: B.new
           prop :c, C
@@ -557,7 +557,7 @@ module RBI
       out = Parser.parse_string(rbi)
       assert_equal(<<~RBI, out.string(print_locs: true))
         # -:1:0-7:3
-        class Foo < ::T::Struct
+        class Foo < T::Struct
           # -:2:2-2:13
           const :a, A
           # -:3:2-3:29
