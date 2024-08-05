@@ -292,6 +292,7 @@ module RBI
             B = new
             C = new
           end
+
           def baz; end
         end
       RBI
@@ -310,12 +311,37 @@ module RBI
           enums do
             A = new
           end
+
           def baz; end
         end
       RBI
 
       out = Parser.parse_string(rbi)
       assert_equal(rbi, out.string)
+    end
+
+    def test_parse_t_enums_with_comments
+      rbi = <<~RBI
+        # Comment 1
+        class Foo < T::Enum
+          enums do
+            # Comment 2
+            A = new
+
+            # Comment 3
+            B = new
+
+            # Comment 4
+            C = new
+          end
+
+          # Comment 5
+          def baz; end
+        end
+      RBI
+
+      tree = Parser.parse_string(rbi)
+      assert_equal(rbi, tree.string)
     end
 
     def test_parse_sorbet_helpers
@@ -633,10 +659,14 @@ module RBI
         class Foo < T::Enum
           # -:2:2-6:5
           enums do
+            # -:3:4-3:11
             A = new
+            # -:4:4-4:11
             B = new
+            # -:5:4-5:11
             C = new
           end
+
           # -:7:2-7:14
           def baz; end
         end
