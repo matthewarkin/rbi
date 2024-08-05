@@ -225,8 +225,12 @@ module RBI
         end
       RBI
 
-      out = Parser.parse_string(rbi)
-      assert_equal(<<~RBI, out.string)
+      tree = Parser.parse_string(rbi)
+
+      # Make sure the T::Struct is not parsed as a normal class
+      assert_equal(TStruct, tree.nodes.first.class)
+
+      assert_equal(<<~RBI, tree.string)
         class Foo < ::T::Struct
           const :a, A
           const :b, B, default: B.new
