@@ -6,14 +6,15 @@ module RBI
     class InlineVisibilities < Visitor
       extend T::Sig
 
-      sig { void }
+      #: -> void
       def initialize
         super
 
         @current_visibility = T.let(Public.new, Visibility)
       end
 
-      sig { override.params(node: T.nilable(Node)).void }
+      # @override
+      #: (Node? node) -> void
       def visit(node)
         return unless node
 
@@ -34,7 +35,7 @@ module RBI
   class Tree
     extend T::Sig
 
-    sig { void }
+    #: -> void
     def inline_visibilities!
       visitor = Rewriters::InlineVisibilities.new
       visitor.visit(self)

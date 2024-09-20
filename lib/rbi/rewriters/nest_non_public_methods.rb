@@ -6,7 +6,8 @@ module RBI
     class NestNonPublicMethods < Visitor
       extend T::Sig
 
-      sig { override.params(node: T.nilable(Node)).void }
+      # @override
+      #: (Node? node) -> void
       def visit(node)
         return unless node
 
@@ -42,7 +43,7 @@ module RBI
   class Tree
     extend T::Sig
 
-    sig { void }
+    #: -> void
     def nest_non_public_methods!
       visitor = Rewriters::NestNonPublicMethods.new
       visitor.visit(self)
@@ -52,10 +53,10 @@ module RBI
   class VisibilityGroup < Tree
     extend T::Sig
 
-    sig { returns(Visibility) }
+    #: Visibility
     attr_reader :visibility
 
-    sig { params(visibility: Visibility).void }
+    #: (Visibility visibility) -> void
     def initialize(visibility)
       super()
       @visibility = visibility
