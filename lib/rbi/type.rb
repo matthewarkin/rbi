@@ -688,7 +688,8 @@ module RBI
       # Builds a type that represents a generic type like `T::Array[String]` or `T::Hash[Symbol, Integer]`.
       #: (String name, *(Type | T::Array[Type]) params) -> Generic
       def generic(name, *params)
-        T.unsafe(Generic).new(name, *params.flatten)
+        unsafe = Generic #:: untyped
+        unsafe.new(name, *params.flatten)
       end
 
       # Builds a type that represents a type parameter like `T.type_parameter(:U)`.

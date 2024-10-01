@@ -79,8 +79,8 @@ module RBI
           case recv
           when Prism::ConstantReadNode
             # `Foo[Bar]` or `Foo[Bar, Baz]`
-            args = check_arguments_at_least!(node, 1)
-            return T.unsafe(Type::Generic).new(recv.slice, *args.map { |arg| parse_node(arg) })
+            unsafe = Type::Generic #:: untyped
+            return unsafe.new(recv.slice, *check_arguments_at_least!(node, 1).map { |arg| parse_node(arg) })
           when Prism::ConstantPathNode
             if t_class?(recv)
               # `T::Class[Foo]` or `::T::Class[Foo]`
@@ -89,8 +89,8 @@ module RBI
               return Type::Class.new(parse_node(first))
             else
               # `::Foo[Bar]` or `::Foo[Bar, Baz]`
-              args = check_arguments_at_least!(node, 1)
-              return T.unsafe(Type::Generic).new(recv.slice, *args.map { |arg| parse_node(arg) })
+              unsafe = Type::Generic #:: untyped
+              return unsafe.new(recv.slice, *check_arguments_at_least!(node, 1).map { |arg| parse_node(arg) })
             end
           when Prism::CallNode
             # `T.class_of(Foo)[Bar]`
@@ -175,7 +175,8 @@ module RBI
 
       #: (Prism::ArrayNode node) -> Type
       def parse_tuple(node)
-        T.unsafe(Type).tuple(*node.elements.map { |elem| parse_node(elem) })
+        elements = node.elements.map { |elem| parse_node(elem) } #:: untyped
+        Type.tuple(*elements)
       end
 
       #: ((Prism::HashNode | Prism::KeywordHashNode) node) -> Type
@@ -195,7 +196,8 @@ module RBI
           end
           [key, parse_node(elem.value)]
         end.to_h
-        T.unsafe(Type).shape(**hash)
+        hash = hash #:: untyped
+        Type.shape(**hash)
       end
 
       #: (Prism::CallNode node) -> Type
@@ -220,7 +222,8 @@ module RBI
 
               [elem.key.slice.delete_suffix(":").to_sym, parse_node(elem.value)]
             end.to_h
-            T.unsafe(type).params(**params)
+            params = params #:: untyped
+            type.params(**params)
           when :returns
             args = check_arguments_exactly!(call, 1)
             first = args.first #:: Prism::Node

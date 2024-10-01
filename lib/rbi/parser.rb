@@ -350,8 +350,9 @@ module RBI
           sigs = current_sigs
           comments = detach_comments_from_sigs(sigs) + node_comments(node)
 
+          args = args.arguments.map { |arg| node_string!(arg).delete_prefix(":").to_sym } #:: untyped
           current_scope << AttrReader.new(
-            *T.unsafe(args.arguments.map { |arg| node_string!(arg).delete_prefix(":").to_sym }),
+            *args,
             sigs: sigs,
             loc: node_loc(node),
             comments: comments,
@@ -367,8 +368,9 @@ module RBI
           sigs = current_sigs
           comments = detach_comments_from_sigs(sigs) + node_comments(node)
 
+          args = args.arguments.map { |arg| node_string!(arg).delete_prefix(":").to_sym } #:: untyped
           current_scope << AttrWriter.new(
-            *T.unsafe(args.arguments.map { |arg| node_string!(arg).delete_prefix(":").to_sym }),
+            *args,
             sigs: sigs,
             loc: node_loc(node),
             comments: comments,
@@ -384,8 +386,9 @@ module RBI
           sigs = current_sigs
           comments = detach_comments_from_sigs(sigs) + node_comments(node)
 
+          args = args.arguments.map { |arg| node_string!(arg).delete_prefix(":").to_sym } #:: untyped
           current_scope << AttrAccessor.new(
-            *T.unsafe(args.arguments.map { |arg| node_string!(arg).delete_prefix(":").to_sym }),
+            *args,
             sigs: sigs,
             loc: node_loc(node),
             comments: comments,
@@ -404,8 +407,9 @@ module RBI
             return
           end
 
+          args = args.arguments.map { |arg| node_string!(arg) } #:: untyped
           current_scope << Extend.new(
-            *T.unsafe(args.arguments.map { |arg| node_string!(arg) }),
+            *args,
             loc: node_loc(node),
             comments: node_comments(node),
           )
@@ -417,8 +421,9 @@ module RBI
             return
           end
 
+          args = args.arguments.map { |arg| node_string!(arg) } #:: untyped
           current_scope << Include.new(
-            *T.unsafe(args.arguments.map { |arg| node_string!(arg) }),
+            *args,
             loc: node_loc(node),
             comments: node_comments(node),
           )
@@ -430,8 +435,9 @@ module RBI
             return
           end
 
+          args = args.arguments.map { |arg| node_string!(arg) } #:: untyped
           current_scope << MixesInClassMethods.new(
-            *T.unsafe(args.arguments.map { |arg| node_string!(arg) }),
+            *args,
             loc: node_loc(node),
             comments: node_comments(node),
           )
