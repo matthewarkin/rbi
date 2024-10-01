@@ -3,8 +3,6 @@
 
 module RBI
   class Index < Visitor
-    include T::Enumerable
-
     class << self
       #: (*Node node) -> Index
       def index(*node)
