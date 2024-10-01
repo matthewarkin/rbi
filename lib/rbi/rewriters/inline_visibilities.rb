@@ -4,8 +4,6 @@
 module RBI
   module Rewriters
     class InlineVisibilities < Visitor
-      extend T::Sig
-
       #: -> void
       def initialize
         super
@@ -33,8 +31,6 @@ module RBI
   end
 
   class Tree
-    extend T::Sig
-
     #: -> void
     def inline_visibilities!
       visitor = Rewriters::InlineVisibilities.new

@@ -5,8 +5,6 @@ require "test_helper"
 
 module RBI
   class IndexTest < Minitest::Test
-    extend T::Sig
-
     def test_index_empty_trees
       rbi = Tree.new
       index_string = index_string(rbi.index)

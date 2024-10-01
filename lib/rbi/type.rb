@@ -4,7 +4,6 @@
 module RBI
   # The base class for all RBI types.
   class Type
-    extend T::Sig
     extend T::Helpers
 
     abstract!
@@ -15,8 +14,6 @@ module RBI
     #
     # It can also be a qualified name like `::Foo` or `Foo::Bar`.
     class Simple < Type
-      extend T::Sig
-
       #: String
       attr_reader :name
 
@@ -43,8 +40,6 @@ module RBI
 
     # `T.anything`.
     class Anything < Type
-      extend T::Sig
-
       # @override
       #: (BasicObject other) -> bool
       def ==(other)
@@ -60,8 +55,6 @@ module RBI
 
     # `T.attached_class`.
     class AttachedClass < Type
-      extend T::Sig
-
       # @override
       #: (BasicObject other) -> bool
       def ==(other)
@@ -77,8 +70,6 @@ module RBI
 
     # `T::Boolean`.
     class Boolean < Type
-      extend T::Sig
-
       # @override
       #: (BasicObject other) -> bool
       def ==(other)
@@ -94,8 +85,6 @@ module RBI
 
     # `T.noreturn`.
     class NoReturn < Type
-      extend T::Sig
-
       # @override
       #: (BasicObject other) -> bool
       def ==(other)
@@ -111,8 +100,6 @@ module RBI
 
     # `T.self_type`.
     class SelfType < Type
-      extend T::Sig
-
       # @override
       #: (BasicObject other) -> bool
       def ==(other)
@@ -128,8 +115,6 @@ module RBI
 
     # `T.untyped`.
     class Untyped < Type
-      extend T::Sig
-
       # @override
       #: (BasicObject other) -> bool
       def ==(other)
@@ -145,8 +130,6 @@ module RBI
 
     # `void`.
     class Void < Type
-      extend T::Sig
-
       # @override
       #: (BasicObject other) -> bool
       def ==(other)
@@ -164,8 +147,6 @@ module RBI
 
     # The class of another type like `T::Class[Foo]`.
     class Class < Type
-      extend T::Sig
-
       #: Type
       attr_reader :type
 
@@ -190,8 +171,6 @@ module RBI
 
     # The singleton class of another type like `T.class_of(Foo)`.
     class ClassOf < Type
-      extend T::Sig
-
       #: Simple
       attr_reader :type
 
@@ -224,8 +203,6 @@ module RBI
 
     # A type that can be `nil` like `T.nilable(String)`.
     class Nilable < Type
-      extend T::Sig
-
       #: Type
       attr_reader :type
 
@@ -250,7 +227,6 @@ module RBI
 
     # A type that is composed of multiple types like `T.all(String, Integer)`.
     class Composite < Type
-      extend T::Sig
       extend T::Helpers
 
       abstract!
@@ -273,8 +249,6 @@ module RBI
 
     # A type that is intersection of multiple types like `T.all(String, Integer)`.
     class All < Composite
-      extend T::Sig
-
       # @override
       #: -> String
       def to_rbi
@@ -284,8 +258,6 @@ module RBI
 
     # A type that is union of multiple types like `T.any(String, Integer)`.
     class Any < Composite
-      extend T::Sig
-
       # @override
       #: -> String
       def to_rbi
@@ -302,8 +274,6 @@ module RBI
 
     # A generic type like `T::Array[String]` or `T::Hash[Symbol, Integer]`.
     class Generic < Type
-      extend T::Sig
-
       #: String
       attr_reader :name
 
@@ -332,8 +302,6 @@ module RBI
 
     # A type parameter like `T.type_parameter(:U)`.
     class TypeParameter < Type
-      extend T::Sig
-
       #: Symbol
       attr_reader :name
 
@@ -360,8 +328,6 @@ module RBI
 
     # A tuple type like `[String, Integer]`.
     class Tuple < Type
-      extend T::Sig
-
       #: T::Array[Type]
       attr_reader :types
 
@@ -386,8 +352,6 @@ module RBI
 
     # A shape type like `{name: String, age: Integer}`.
     class Shape < Type
-      extend T::Sig
-
       #: T::Hash[(String | Symbol), Type]
       attr_reader :types
 
@@ -418,8 +382,6 @@ module RBI
 
     # A proc type like `T.proc.void`.
     class Proc < Type
-      extend T::Sig
-
       #: T::Hash[Symbol, Type]
       attr_reader :proc_params
 
@@ -501,8 +463,6 @@ module RBI
     # Type builder
 
     class << self
-      extend T::Sig
-
       # Simple
 
       # Builds a simple type like `String` or `::Foo::Bar`.

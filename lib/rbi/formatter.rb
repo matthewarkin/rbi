@@ -3,8 +3,6 @@
 
 module RBI
   class Formatter
-    extend T::Sig
-
     #: bool
     attr_writer :sort_nodes
 

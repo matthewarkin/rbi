@@ -4,8 +4,6 @@
 module RBI
   module Rewriters
     class RBSRewrite < Visitor
-      extend T::Sig
-
       # @override
       #: (Node? node) -> void
       def visit(node)
@@ -31,8 +29,6 @@ module RBI
   end
 
   class Tree
-    extend T::Sig
-
     #: -> void
     def rbs_rewrite!
       visitor = Rewriters::RBSRewrite.new

@@ -6,7 +6,6 @@ require "stringio"
 
 module RBI
   class Error < StandardError
-    extend T::Sig
   end
 end
 

@@ -5,8 +5,6 @@ require "test_helper"
 
 module RBI
   class RBSPrinterTest < Minitest::Test
-    extend T::Sig
-
     def test_print_empty_file
       assert_empty(File.new.rbs_string)
     end

@@ -810,8 +810,6 @@ module RBI
   end
 
   class TypePrinter
-    extend T::Sig
-
     #: String
     attr_reader :string
 
@@ -1003,8 +1001,6 @@ module RBI
   end
 
   class File
-    extend T::Sig
-
     #: (?out: (IO | StringIO), ?indent: Integer, ?print_locs: bool, ?max_line_length: Integer?) -> void
     def rbs_print(out: $stdout, indent: 0, print_locs: false, max_line_length: nil)
       p = RBSPrinter.new(out: out, indent: indent, print_locs: print_locs, max_line_length: max_line_length)
@@ -1020,8 +1016,6 @@ module RBI
   end
 
   class Node
-    extend T::Sig
-
     #: (?out: (IO | StringIO), ?indent: Integer, ?print_locs: bool, ?max_line_length: Integer?) -> void
     def rbs_print(out: $stdout, indent: 0, print_locs: false, max_line_length: nil)
       p = RBSPrinter.new(out: out, indent: indent, print_locs: print_locs, max_line_length: max_line_length)
@@ -1037,8 +1031,6 @@ module RBI
   end
 
   class Type
-    extend T::Sig
-
     #: -> String
     def rbs_string
       p = TypePrinter.new
