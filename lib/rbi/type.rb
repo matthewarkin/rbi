@@ -3,9 +3,8 @@
 
 module RBI
   # The base class for all RBI types.
+  # @abstract
   class Type
-    abstract!
-
     # Simple
 
     # A type that represents a simple class name like `String` or `Foo`.
@@ -224,9 +223,8 @@ module RBI
     end
 
     # A type that is composed of multiple types like `T.all(String, Integer)`.
+    # @abstract
     class Composite < Type
-      abstract!
-
       #: T::Array[Type]
       attr_reader :types
 

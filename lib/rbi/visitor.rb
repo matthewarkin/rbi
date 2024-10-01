@@ -4,9 +4,8 @@
 module RBI
   class VisitorError < Error; end
 
+  # @abstract
   class Visitor
-    abstract!
-
     #: (Node? node) -> void
     def visit(node)
       return unless node
