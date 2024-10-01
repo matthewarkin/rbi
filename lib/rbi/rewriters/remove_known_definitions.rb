@@ -123,9 +123,20 @@ module RBI
         @operations << Operation.new(deleted_node: node, duplicate_of: previous)
       end
 
-      class Operation < T::Struct
-        const :deleted_node, Node
-        const :duplicate_of, Node
+      class Operation
+        #: Node
+        attr_reader :deleted_node
+
+        #: Node
+        attr_reader :duplicate_of
+
+        #: (deleted_node: Node, duplicate_of: Node) -> void
+        def initialize(deleted_node:, duplicate_of:)
+          super()
+
+          @deleted_node = deleted_node
+          @duplicate_of = duplicate_of
+        end
 
         #: -> String
         def to_s
