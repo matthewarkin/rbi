@@ -146,7 +146,7 @@ module RBI
 
       #: (Prism::Node node) -> String
       def node_string!(node)
-        T.must(node_string(node))
+        node_string(node) #:: String
       end
     end
 
@@ -541,7 +541,7 @@ module RBI
 
       #: -> Tree
       def current_scope
-        T.must(@scopes_stack.last) # Should never be nil since we create a Tree as the root
+        @scopes_stack.last #:: Tree # Should never be nil since we create a Tree as the root
       end
 
       #: -> T::Array[Sig]
@@ -597,13 +597,15 @@ module RBI
             arg.elements.each do |assoc|
               next unless assoc.is_a?(Prism::AssocNode)
 
+              value = node_string(assoc.value) #:: String
               args << KwArg.new(
                 node_string!(assoc.key).delete_suffix(":"),
-                T.must(node_string(assoc.value)),
+                value,
               )
             end
           else
-            args << Arg.new(T.must(node_string(arg)))
+            value = node_string(arg) #:: String
+            args << Arg.new(value)
           end
         end
 

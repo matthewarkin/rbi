@@ -319,7 +319,8 @@ module RBI
       if sigs.any?
         print(": ")
         first, *rest = sigs
-        print_method_sig(node, T.must(first))
+        first = first #:: Sig
+        print_method_sig(node, first)
         if rest.any?
           spaces = node.name.size + 4
           rest.each do |sig|

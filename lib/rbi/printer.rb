@@ -707,7 +707,8 @@ module RBI
       printn(" do")
       indent
       if modifiers.any?
-        printl(T.must(modifiers.first))
+        value = modifiers.first #:: String
+        printl(value)
         indent
         modifiers[1..]&.each do |modifier|
           printl(".#{modifier}")

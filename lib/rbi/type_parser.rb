@@ -18,7 +18,7 @@ module RBI
         raise Error, "Expected a type expression, got nothing" if node.statements.body.empty?
         raise Error, "Expected a single type expression, got `#{node.slice}`" if node.statements.body.size > 1
 
-        node = T.must(node.statements.body.first)
+        node = node.statements.body.first #:: Prism::Node
         parse_node(node)
       end
 
@@ -40,7 +40,8 @@ module RBI
           children = body.body
           raise Error, "Expected exactly 1 child, got #{children.size}" unless children.size == 1
 
-          parse_node(T.must(children.first))
+          first = children.first #:: Prism::Node
+          parse_node(first)
         else
           raise Error, "Unexpected node `#{node}`"
         end
@@ -84,7 +85,8 @@ module RBI
             if t_class?(recv)
               # `T::Class[Foo]` or `::T::Class[Foo]`
               args = check_arguments_exactly!(node, 1)
-              return Type::Class.new(parse_node(T.must(args.first)))
+              first = args.first #:: Prism::Node
+              return Type::Class.new(parse_node(first))
             else
               # `::Foo[Bar]` or `::Foo[Bar, Baz]`
               args = check_arguments_at_least!(node, 1)
@@ -94,11 +96,13 @@ module RBI
             # `T.class_of(Foo)[Bar]`
             if t_class_of?(recv)
               type_args = check_arguments_exactly!(recv, 1)
-              type = parse_node(T.must(type_args.first))
+              first = type_args.first #:: Prism::Node
+              type = parse_node(first)
               raise Error, "Expected a simple type, got `#{type}`" unless type.is_a?(Type::Simple)
 
               type_param_args = check_arguments_exactly!(node, 1)
-              type_param = parse_node(T.must(type_param_args.first))
+              first = type_param_args.first #:: Prism::Node
+              type_param = parse_node(first)
               return Type::ClassOf.new(type, type_param)
             end
           end
@@ -117,7 +121,8 @@ module RBI
         when :nilable
           # `T.nilable(Foo)`
           args = check_arguments_exactly!(node, 1)
-          type = parse_node(T.must(args.first))
+          first = args.first #:: Prism::Node
+          type = parse_node(first)
           Type::Nilable.new(type)
         when :anything
           # `T.anything`
@@ -142,7 +147,8 @@ module RBI
         when :class_of
           # `T.class_of(Foo)`
           args = check_arguments_exactly!(node, 1)
-          type = parse_node(T.must(args.first))
+          first = args.first #:: Prism::Node
+          type = parse_node(first)
           raise Error, "Expected a simple type, got `#{type}`" unless type.is_a?(Type::Simple)
 
           Type::ClassOf.new(type)
@@ -180,7 +186,8 @@ module RBI
           elem_key = elem.key
           key = case elem_key
           when Prism::SymbolNode
-            T.must(elem_key.value).to_sym
+            value = elem_key.value #:: String
+            value.to_sym
           when Prism::StringNode
             elem_key.content
           else
@@ -216,14 +223,16 @@ module RBI
             T.unsafe(type).params(**params)
           when :returns
             args = check_arguments_exactly!(call, 1)
-            type.returns(parse_node(T.must(args.first)))
+            first = args.first #:: Prism::Node
+            type.returns(parse_node(first))
           when :void
             type.void
           when :proc
             return type
           when :bind
             args = check_arguments_exactly!(call, 1)
-            type.bind(parse_node(T.must(args.first)))
+            first = args.first #:: Prism::Node
+            type.bind(parse_node(first))
           else
             raise Error, "Unexpected expression `#{node.slice}`"
           end

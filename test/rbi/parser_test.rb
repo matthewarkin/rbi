@@ -377,7 +377,7 @@ module RBI
       tree = Parser.parse_string(rbi)
 
       # Make sure the type members and templates are not parsed as constants
-      cls = T.must(tree.nodes.grep(Class).first)
+      cls = tree.nodes.grep(Class).first #:: Class
       assert_equal(0, cls.nodes.grep(Const).size)
       assert_equal(9, cls.nodes.grep(TypeMember).size)
 

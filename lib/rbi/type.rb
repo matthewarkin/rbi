@@ -609,7 +609,7 @@ module RBI
         end.uniq
 
         if flattened.size == 1
-          T.must(flattened.first)
+          flattened.first #:: Type
         else
           raise ArgumentError, "RBI::Type.all should have at least 2 types supplied" if flattened.size < 2
 
@@ -671,7 +671,7 @@ module RBI
             raise ArgumentError, "RBI::Type.any should have at least 2 types supplied"
           end
         when 1
-          T.must(types.first)
+          types.first #:: Type
         else
           Any.new(types)
         end
