@@ -163,12 +163,13 @@ module RBI
       def initialize(source, comments:, file:)
         super(source, file: file)
 
-        @comments_by_line = T.let(comments.to_h { |c| [c.location.start_line, c] }, T::Hash[Integer, Prism::Comment])
-        @tree = T.let(Tree.new, Tree)
+        comments_by_line = comments.to_h { |c| [c.location.start_line, c] }
+        @comments_by_line = comments_by_line #: Hash[Integer, Prism::Comment]
+        @tree = Tree.new #: Tree
 
-        @scopes_stack = T.let([@tree], T::Array[Tree])
-        @last_node = T.let(nil, T.nilable(Prism::Node))
-        @last_sigs = T.let([], T::Array[RBI::Sig])
+        @scopes_stack = [@tree] #: Array[Tree]
+        @last_node = nil #: Prism::Node?
+        @last_sigs = [] #: Array[RBI::Sig]
       end
 
       # @override
@@ -517,7 +518,7 @@ module RBI
       # Collect all the remaining comments after visiting the tree
       #: -> void
       def collect_orphan_comments
-        last_line = T.let(nil, T.nilable(Integer))
+        last_line = nil #: Integer?
         last_node_end = @tree.nodes.last&.loc&.end_line
 
         @comments_by_line.each do |line, comment|
@@ -552,7 +553,7 @@ module RBI
 
       #: (T::Array[Sig] sigs) -> T::Array[Comment]
       def detach_comments_from_sigs(sigs)
-        comments = T.let([], T::Array[Comment])
+        comments = [] #: Array[Comment]
 
         sigs.each do |sig|
           comments += sig.comments.dup
@@ -587,7 +588,7 @@ module RBI
 
       #: (Prism::Node? node) -> T::Array[Arg]
       def parse_send_args(node)
-        args = T.let([], T::Array[Arg])
+        args = [] #: Array[Arg]
         return args unless node.is_a?(Prism::ArgumentsNode)
 
         node.arguments.each do |arg|
@@ -703,7 +704,7 @@ module RBI
         return unless node_string(recv) =~ /(::)?Struct/
 
         members = []
-        keyword_init = T.let(false, T::Boolean)
+        keyword_init = false #: bool
 
         args = send.arguments
         if args.is_a?(Prism::ArgumentsNode)
@@ -755,7 +756,7 @@ module RBI
         type = node_string!(type_arg)
         loc = node_loc(send)
         comments = node_comments(send)
-        default_value = T.let(nil, T.nilable(String))
+        default_value = nil #: String?
 
         rest.each do |arg|
           next unless arg.is_a?(Prism::KeywordHashNode)
@@ -833,7 +834,7 @@ module RBI
       def initialize(content, file:)
         super
 
-        @current = T.let(Sig.new, Sig)
+        @current = Sig.new #: Sig
       end
 
       # @override

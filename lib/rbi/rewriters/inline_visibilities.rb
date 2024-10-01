@@ -10,7 +10,7 @@ module RBI
       def initialize
         super
 
-        @current_visibility = T.let(Public.new, Visibility)
+        @current_visibility = Public.new #: Visibility
       end
 
       # @override
