@@ -88,7 +88,7 @@ module RBI
         when Group::Kind::SingletonClasses    then 11
         when Group::Kind::Consts              then 12
         else
-          T.absurd(kind)
+          raise "Unknown group kind: #{kind}"
         end
       end
 
