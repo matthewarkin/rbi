@@ -4,8 +4,6 @@
 module RBI
   # The base class for all RBI types.
   class Type
-    extend T::Helpers
-
     abstract!
 
     # Simple
@@ -227,8 +225,6 @@ module RBI
 
     # A type that is composed of multiple types like `T.all(String, Integer)`.
     class Composite < Type
-      extend T::Helpers
-
       abstract!
 
       #: T::Array[Type]

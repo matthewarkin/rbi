@@ -5,8 +5,6 @@ module RBI
   class ReplaceNodeError < Error; end
 
   class Node
-    extend T::Helpers
-
     abstract!
 
     #: Tree?
@@ -78,8 +76,6 @@ module RBI
   end
 
   class NodeWithComments < Node
-    extend T::Helpers
-
     abstract!
 
     #: T::Array[Comment]
@@ -286,8 +282,6 @@ module RBI
   # Attributes
 
   class Attr < NodeWithComments
-    extend T::Helpers
-
     abstract!
 
     #: T::Array[Symbol]
@@ -499,7 +493,6 @@ module RBI
   end
 
   class Param < NodeWithComments
-    extend T::Helpers
     abstract!
 
     #: String
@@ -650,8 +643,6 @@ module RBI
   # Mixins
 
   class Mixin < NodeWithComments
-    extend T::Helpers
-
     abstract!
 
     #: T::Array[String]
@@ -695,8 +686,6 @@ module RBI
   # Visibility
 
   class Visibility < NodeWithComments
-    extend T::Helpers
-
     abstract!
 
     #: Symbol
@@ -926,8 +915,6 @@ module RBI
   end
 
   class TStructField < NodeWithComments
-    extend T::Helpers
-
     abstract!
 
     #: String
@@ -1027,8 +1014,6 @@ module RBI
   # Sorbet's misc.
 
   class Helper < NodeWithComments
-    extend T::Helpers
-
     #: String
     attr_reader :name
 

@@ -68,8 +68,6 @@ module RBI
 
   # A Node that can be referred to by a unique ID inside an index
   module Indexable
-    extend T::Helpers
-
     interface!
 
     # Unique IDs that refer to this node.

@@ -5,7 +5,6 @@ module RBI
   class VisitorError < Error; end
 
   class Visitor
-    extend T::Helpers
     abstract!
 
     #: (Node? node) -> void
